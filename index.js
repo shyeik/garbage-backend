@@ -9,12 +9,11 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 8080;
-app.use(cors());
 
 app.use(
   cors({
-    origin: "https://garbage-notifier.vercel.app", // your frontend origin
-    credentials: true, // if you're using cookies or auth headers
+    origin: process.env.CLIENT_ORIGIN, // Adjust as needed
+    credentials: true, // Allow credentials if needed
   })
 );
 app.use(express.json());
