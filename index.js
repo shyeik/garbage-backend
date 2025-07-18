@@ -25,9 +25,8 @@ app.use("/api/auth", authRoutes); // Your route will be at /api/auth/register
 app.use("/api/schedule", scheduleRoutes); // For admin/user schedules
 app.use("/api/announcements", announcementRoutes);
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
-
 app.get("/", (req, res) => {
   res.json({ message: "Hello world!" });
 });
+
+export default app;
