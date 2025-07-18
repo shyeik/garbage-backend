@@ -8,7 +8,15 @@ import announcementRoutes from "./routes/announcement.js";
 dotenv.config();
 
 const app = express();
+const port = process.env.PORT || 8080;
 app.use(cors());
+
+app.use(
+  cors({
+    origin: "https://garbage-notifier.vercel.app", // your frontend origin
+    credentials: true, // if you're using cookies or auth headers
+  })
+);
 app.use(express.json());
 
 mongoose
@@ -26,7 +34,9 @@ app.use("/api/schedule", scheduleRoutes); // For admin/user schedules
 app.use("/api/announcements", announcementRoutes);
 
 app.get("/", (req, res) => {
-  res.json({ message: "Hello world!" });
+  res.json("Hello world!");
 });
 
-export default app;
+app.listen(port, () => {
+  console.log(`Server app is listening at http://localhost:${port}`);
+});

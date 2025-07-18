@@ -68,4 +68,21 @@ router.get("/user/:barangay", async (req, res) => {
   }
 });
 
+router.put("/:id", async (req, res) => {
+  try {
+    const updatedSchedule = await Schedule.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    if (!updatedSchedule) {
+      return res.status(404).json({ message: "Schedule not found" });
+    }
+    res.json(updatedSchedule);
+  } catch (error) {
+    console.error("Update error:", error);
+    res.status(500).json({ message: "Failed to update schedule" });
+  }
+});
+
 export default router;
