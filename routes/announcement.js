@@ -3,24 +3,27 @@ import Announcement from "../models/Announcement.js";
 
 const router = express.Router();
 
-// Create
+// Create announcement
 router.post("/", async (req, res) => {
   try {
     const newPost = new Announcement(req.body);
     await newPost.save();
-    res.status(201).json(newPost);
+    console.log("✅ Announcement created:", newPost);
+    res.status(201).json(newPost); // return the created document
   } catch (err) {
-    res.status(500).json({ error: "Failed to create announcement." });
+    console.error("❌ Error creating announcement:", err);
+    res.status(500).end(); // internal server error
   }
 });
 
-// Get all
+// Get all announcements
 router.get("/", async (req, res) => {
   try {
     const all = await Announcement.find().sort({ createdAt: -1 });
     res.json(all);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch announcements." });
+    console.error("❌ Error fetching announcements:", err);
+    res.status(500).end();
   }
 });
 

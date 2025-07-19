@@ -2,12 +2,18 @@ import express from "express";
 import Schedule from "../models/Schedule.js";
 import User from "../models/User.js";
 import transporter from "../utils/mailer.js";
+
 const router = express.Router();
 
 // GET all schedules
 router.get("/", async (req, res) => {
-  const schedules = await Schedule.find().sort("day");
-  res.json(schedules);
+  try {
+    const schedules = await Schedule.find().sort("day");
+    res.json(schedules);
+  } catch (err) {
+    console.error("❌ Error fetching all schedules:", err);
+    res.status(500).end(); // just send error code
+  }
 });
 
 // POST: Add new schedule and notify users
@@ -18,9 +24,11 @@ router.post("/", async (req, res) => {
     // 1. Save schedule to DB
     const newSchedule = new Schedule({ barangay, street, day, type, time });
     await newSchedule.save();
+    console.log("✅ Schedule saved:", newSchedule);
 
     // 2. Find users matching barangay + street
     const users = await User.find({ barangay, street });
+    console.log(`📧 Sending emails to ${users.length} users`);
 
     // 3. Send notification email to each
     users.forEach((user) => {
@@ -32,21 +40,22 @@ router.post("/", async (req, res) => {
       });
     });
 
-    res.status(201).json({ message: "Schedule added and notifications sent" });
+    res.status(201).end(); // created successfully
   } catch (err) {
-    console.error("Error in schedule POST:", err);
-    res.status(400).json({ error: "Failed to add schedule or send email" });
+    console.error("❌ Error in POST /schedule:", err);
+    res.status(400).end(); // bad request
   }
 });
 
-//psgc.cloud/api/cities/1381300000/1381300022
 // DELETE schedule
 router.delete("/:id", async (req, res) => {
   try {
     await Schedule.findByIdAndDelete(req.params.id);
-    res.json({ message: "Schedule deleted" });
+    console.log(`🗑️ Deleted schedule ID: ${req.params.id}`);
+    res.status(204).end(); // no content
   } catch (err) {
-    res.status(500).json({ error: "Failed to delete" });
+    console.error("❌ Delete error:", err);
+    res.status(500).end();
   }
 });
 
@@ -56,18 +65,18 @@ router.get("/user/:barangay", async (req, res) => {
   const { street } = req.query;
 
   const filter = { barangay };
-  if (street) {
-    filter.street = street;
-  }
+  if (street) filter.street = street;
 
   try {
     const schedules = await Schedule.find(filter).sort("day");
     res.json(schedules);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch schedule" });
+    console.error("❌ Error fetching schedules by location:", error);
+    res.status(500).end();
   }
 });
 
+// Update schedule
 router.put("/:id", async (req, res) => {
   try {
     const updatedSchedule = await Schedule.findByIdAndUpdate(
@@ -75,13 +84,17 @@ router.put("/:id", async (req, res) => {
       req.body,
       { new: true }
     );
+
     if (!updatedSchedule) {
-      return res.status(404).json({ message: "Schedule not found" });
+      console.warn("⚠️ Schedule not found for update:", req.params.id);
+      return res.status(404).end();
     }
+
+    console.log("✅ Schedule updated:", updatedSchedule);
     res.json(updatedSchedule);
   } catch (error) {
-    console.error("Update error:", error);
-    res.status(500).json({ message: "Failed to update schedule" });
+    console.error("❌ Update error:", error);
+    res.status(500).end();
   }
 });
 
