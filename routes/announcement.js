@@ -1,29 +1,44 @@
+// routes/announcementRoutes.js
 import express from "express";
 import Announcement from "../models/Announcement.js";
+import User from "../models/User.js"; // to get emails
+import transporter from "../utils/mailer.js";
 
 const router = express.Router();
 
-// Create announcement
+// POST announcement and notify all users
 router.post("/", async (req, res) => {
   try {
     const newPost = new Announcement(req.body);
     await newPost.save();
-    console.log("✅ Announcement created:", newPost);
-    res.status(201).json(newPost); // return the created document
+
+    // ✅ Find all users to notify
+    const users = await User.find();
+
+    // ✅ Send email to each
+    users.forEach((user) => {
+      transporter.sendMail({
+        from: '"Garbage Notifier" <garbagenotifier@gmail.com>',
+        to: user.email,
+        subject: `${newPost.type} from Garbage Notifier`,
+        text: newPost.message,
+      });
+    });
+
+    res.status(201).json(newPost);
   } catch (err) {
-    console.error("❌ Error creating announcement:", err);
-    res.status(500).end(); // internal server error
+    console.error("Error sending announcement:", err);
+    res.status(500).json({ error: "Failed to create and send announcement." });
   }
 });
 
-// Get all announcements
+// Get all
 router.get("/", async (req, res) => {
   try {
     const all = await Announcement.find().sort({ createdAt: -1 });
     res.json(all);
   } catch (err) {
-    console.error("❌ Error fetching announcements:", err);
-    res.status(500).end();
+    res.status(500).json({ error: "Failed to fetch announcements." });
   }
 });
 
